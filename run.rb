@@ -183,6 +183,52 @@ docs.each do |reg_number, doc|
     end
   end
   
+  # Номер диплома.
+  values = []
+  doc[:doc].each { |row| values.push(row[34]) unless row[34].nil? || '' == row[34] }
+  if values.uniq.size != 1
+    r34 = ''
+  else
+    if values.uniq.first.split(' ').size != 2
+      r34 = ['', '']
+    else
+      r34 = values.uniq.first.split(' ')
+    end
+  end  
+  
+  # Регистрационный номер.
+  values = []
+  doc[:doc].each { |row| values.push(row[33]) unless row[33].nil? || '' == row[33] }
+  if values.uniq.size != 1
+    r33 = ''
+  else
+    r33 = values.uniq.first
+  end
+  
+  # Дата выдачи
+  values = []
+  doc[:doc].each do |row| 
+    unless row[5].nil? || '' == row[5]
+      begin
+        parsed = Date.strptime(row[5], '%m/%d/%y %H:%M:%S')
+      rescue
+        fail row[5].inspect
+      end
+      
+      # unless Date.parse('05/05/2014') == parsed
+      # unless 2014 == parsed.year
+      #   values.push(parsed)
+      # end
+      values.push(parsed)
+    end
+  end
+  if values.uniq.size != 1
+    r5 = nil
+  else
+    r5 = values.uniq.first
+    # puts r7
+  end
+  
   clean_docs.push({
     'Название документа'  => 'Диплом',
     'Вид документа'  => doc_type,
@@ -190,10 +236,10 @@ docs.each do |reg_number, doc|
     'Подтверждение утраты'  => nil,
     'Подтверждение обмена'  => nil,
     'Уровень образования'  => edu_type,
-    'Серия документа'  => '',
-    'Номер документа'  => '',
-    'Дата выдачи'  => '',
-    'Регистрационный номер'  => '',
+    'Серия документа'  => r34[0],
+    'Номер документа'  => r34[1],
+    'Дата выдачи'  => r5.nil? ? nil : r5.strftime('%d.%m.%Y'),
+    'Регистрационный номер'  => r33,
     'Код специальности, направления подготовки'  => r32[0],
     'Наименование специальности, направления подготовки'  => r32[1],
     'Наименование квалификации'  => r30,
@@ -204,7 +250,7 @@ docs.each do |reg_number, doc|
     'Фамилия получателя'  => r28[0],
     'Имя получателя'  => r28[1],
     'Отчество получателя'  => r28[2],
-    'Дата рождения получателя'  => r7,
+    'Дата рождения получателя'  => r7.nil? ? nil : r7.strftime('%d.%m.%Y'),
     'Пол получателя'  => r8.nil? ? nil : ('1' == r8 ? 'Муж' : 'Жен')
   })
 end
